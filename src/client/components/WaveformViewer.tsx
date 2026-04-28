@@ -13,8 +13,11 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
   const hostRef = useRef<HTMLDivElement | null>(null);
   const waveRef = useRef<WaveSurfer | null>(null);
   const [duration, setDuration] = useState(0);
+
   const outPointRef = useRef(outPoint);
   outPointRef.current = outPoint;
+  const onOutPointChangeRef = useRef(onOutPointChange);
+  onOutPointChangeRef.current = onOutPointChange;
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -33,12 +36,12 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
       const d = wave.getDuration();
       setDuration(d);
       if (outPointRef.current === 0) {
-        onOutPointChange(d);
+        onOutPointChangeRef.current(d);
       }
     });
     waveRef.current = wave;
     return () => wave.destroy();
-  }, [audioUrl, onOutPointChange]);
+  }, [audioUrl]);
 
   const seek = (value: number) => {
     if (!waveRef.current || duration <= 0) return;
