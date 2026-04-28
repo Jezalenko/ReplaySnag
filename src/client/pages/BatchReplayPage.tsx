@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import sanitizeFilename from 'sanitize-filename';
 import { createBatchExport, getJobStatus, uploadFiles, UploadedClientFile } from '../components/api';
 import { WaveformViewer } from '../components/WaveformViewer';
 
@@ -30,10 +31,8 @@ function addHour(startHour: string, offset: number, segmentsPerHour: number): st
 }
 
 function previewFilename(template: string, data: Record<string, string | number>): string {
-  return template
-    .replace(/\{(\w+)\}/g, (_, token: string) => String(data[token] ?? ''))
-    .replace(/\s+/g, ' ')
-    .trim();
+  const rendered = template.replace(/\{(\w+)\}/g, (_, token: string) => String(data[token] ?? ''));
+  return sanitizeFilename(rendered).replace(/\s+/g, ' ').trim();
 }
 
 export function BatchReplayPage() {
