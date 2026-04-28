@@ -1,0 +1,25 @@
+import { Link, Route, Routes } from 'react-router-dom';
+import { HomePage } from './pages/HomePage';
+import { QuickReplayPage } from './pages/QuickReplayPage';
+import { BatchReplayPage } from './pages/BatchReplayPage';
+
+export default function App() {
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <Link to="/" className="brand">ReplaySnag</Link>
+        <nav>
+          <Link to="/quick">Quick Replay</Link>
+          <Link to="/batch">Batch Replay Packager</Link>
+        </nav>
+      </header>
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/quick" element={<QuickReplayPage />} />
+          <Route path="/batch" element={<BatchReplayPage />} />
+        </Routes>
+      </main>
+    </div>
+  );
+}
