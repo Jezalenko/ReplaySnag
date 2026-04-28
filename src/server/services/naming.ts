@@ -1,5 +1,5 @@
 import sanitizeFilename from 'sanitize-filename';
-import { BatchNamingConfig } from '@shared/types';
+import type { BatchNamingConfig } from '../../shared/types.js';
 
 function addHour(startHour: string, offset: number, segmentsPerHour: number): string {
   const hourNum = Number.parseInt(startHour, 10);

@@ -1,4 +1,4 @@
-import { ExportJobStatus } from '@shared/types';
+import type { ExportJobStatus } from '../../shared/types';
 
 export interface UploadedClientFile {
   id: string;

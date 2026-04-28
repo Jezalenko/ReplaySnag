@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import archiver from 'archiver';
 import sanitizeFilename from 'sanitize-filename';
 import { nanoid } from 'nanoid';
-import { BatchExportRequest, QuickExportRequest } from '@shared/types';
+import type { BatchExportRequest, QuickExportRequest } from '../../shared/types.js';
 import { exportsDir, uploadsDir, workDir } from '../utils/paths.js';
 import { getUpload } from '../utils/storage.js';
 import { buildBatchFilename, remapHour } from './naming.js';

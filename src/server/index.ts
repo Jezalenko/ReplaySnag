@@ -4,7 +4,7 @@ import multer from 'multer';
 import path from 'node:path';
 import { nanoid } from 'nanoid';
 import sanitizeFilename from 'sanitize-filename';
-import { BatchExportRequest, ExportJobStatus, QuickExportRequest, UploadedAudio } from '@shared/types';
+import type { BatchExportRequest, ExportJobStatus, QuickExportRequest, UploadedAudio } from '../shared/types.js';
 import { cleanDanglingManifestEntries, getUpload, saveUpload } from './utils/storage.js';
 import { exportsDir, uploadsDir } from './utils/paths.js';
 import { createJob, getJob, updateJob } from './services/jobStore.js';

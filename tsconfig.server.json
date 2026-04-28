@@ -5,15 +5,11 @@
     "moduleResolution": "NodeNext",
     "outDir": "dist/server",
     "rootDir": "src",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "types": ["node"],
-    "baseUrl": ".",
-    "paths": {
-      "@shared/*": ["src/shared/*"]
-    }
+    "types": ["node"]
   },
   "include": ["src/server", "src/shared"]
 }

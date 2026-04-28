@@ -1,4 +1,4 @@
-import { ExportJobStatus } from '@shared/types';
+import type { ExportJobStatus } from '../../shared/types.js';
 
 const jobs = new Map<string, ExportJobStatus>();
 

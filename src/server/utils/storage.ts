@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { UploadedAudio } from '@shared/types';
+import type { UploadedAudio } from '../../shared/types.js';
 import { uploadsDir } from './paths.js';
 
 const manifestPath = path.join(uploadsDir, 'manifest.json');
