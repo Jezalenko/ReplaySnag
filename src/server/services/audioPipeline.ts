@@ -42,9 +42,13 @@ async function buildQuickCommand(config: QuickExportRequest, outputPath: string)
   }
 
   const segmentFilters: string[] = [];
-  if (typeof config.inPoint === 'number' || typeof config.outPoint === 'number') {
-    const start = Math.max(0, config.inPoint ?? 0);
-    const end = typeof config.outPoint === 'number' ? `:end=${Math.max(start, config.outPoint)}` : '';
+  const inPoint = config.inPoint ?? 0;
+  const outPoint = config.outPoint ?? 0;
+  const hasInPoint = inPoint > 0;
+  const hasOutPoint = outPoint > 0 && outPoint > inPoint;
+  if (hasInPoint || hasOutPoint) {
+    const start = Math.max(0, inPoint);
+    const end = hasOutPoint ? `:end=${outPoint}` : '';
     segmentFilters.push(`atrim=start=${start}${end}`, 'asetpts=PTS-STARTPTS');
   }
   if (config.trimSilence) {
@@ -71,14 +75,17 @@ async function buildQuickCommand(config: QuickExportRequest, outputPath: string)
     pieces.push('[a_outro]');
   }
 
-  chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1[a_joined]`);
-
   const postFilters: string[] = [];
   if (config.fadeInSeconds && config.fadeInSeconds > 0) postFilters.push(`afade=t=in:st=0:d=${config.fadeInSeconds}`);
   if (config.fadeOutSeconds && config.fadeOutSeconds > 0) postFilters.push('areverse', `afade=t=in:st=0:d=${config.fadeOutSeconds}`, 'areverse');
   if (config.normalizeLoudness) postFilters.push('loudnorm=I=-16:LRA=7:TP=-1.5');
 
-  chains.push(`[a_joined]${postFilters.length ? ',' + postFilters.join(',') : ''}[a_final]`);
+  if (postFilters.length) {
+    chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1[a_joined]`);
+    chains.push(`[a_joined]${postFilters.join(',')}[a_final]`);
+  } else {
+    chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1[a_final]`);
+  }
 
   const codecArgs = config.format === 'wav' ? ['-c:a', 'pcm_s16le'] : ['-codec:a', 'libmp3lame', '-q:a', '2'];
 
