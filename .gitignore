@@ -1,0 +1,9 @@
+node_modules
+dist
+.env
+data/uploads/*
+data/exports/*
+data/work/*
+!data/uploads/.gitkeep
+!data/exports/.gitkeep
+!data/work/.gitkeep
