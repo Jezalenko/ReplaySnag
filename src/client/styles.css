@@ -1,30 +1,44 @@
 :root {
   color-scheme: dark;
-  font-family: Inter, system-ui, sans-serif;
-  background: #111214;
-  color: #f7f7f7;
+  font-family: 'Poppins', 'Montserrat', Aptos, system-ui, sans-serif;
+  background: #080404;
+  color: #F5F1EC;
 }
-body { margin: 0; background: #111214; }
+body { margin: 0; background: #080404; }
 .app-shell { min-height: 100vh; }
 .topbar {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 1rem 1.5rem; border-bottom: 1px solid #2a2b30; background: #18191f;
+  padding: 0.75rem 1.5rem; border-bottom: 1px solid #542A12; background: #160F0E;
 }
-.topbar nav { display: flex; gap: 1rem; }
-a { color: #fbbf24; text-decoration: none; }
-.brand { font-weight: 700; font-size: 1.2rem; }
+.topbar nav { display: flex; gap: 1.25rem; align-items: center; }
+.brand-logo { display: block; height: 44px; width: auto; }
+a { color: #F6B01A; text-decoration: none; }
+a:hover { color: #F5781E; }
 .content { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
-.panel { background: #1b1d24; border: 1px solid #2c2f38; border-radius: 12px; padding: 1rem; }
+.panel { background: #160F0E; border: 1px solid #542A12; border-radius: 12px; padding: 1rem; }
 .stack { display: grid; gap: 1rem; }
 .grid { display: grid; gap: 1rem; }
 .grid.two { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
-label { display: grid; gap: 0.3rem; font-size: 0.95rem; }
-input, select, button {
-  background: #0f1015; color: #fff; border: 1px solid #343844; border-radius: 8px; padding: 0.55rem;
+label { display: grid; gap: 0.3rem; font-size: 0.95rem; color: #F5F1EC; }
+small { color: #AEA098; font-size: 0.85rem; }
+input, select {
+  background: #080404; color: #F5F1EC; border: 1px solid #542A12; border-radius: 8px; padding: 0.55rem;
+  font-family: inherit;
 }
-.button { display: inline-block; border: 1px solid #f59e0b; color: #f59e0b; padding: 0.6rem 1rem; border-radius: 8px; }
-.button.primary { background: #f59e0b; color: #1b1d24; font-weight: 700; width: fit-content; }
-.hero h1 { margin-bottom: 0.2rem; }
+input:focus, select:focus { outline: none; border-color: #F5781E; }
+button {
+  background: transparent; color: #F5F1EC; border: 1px solid #542A12; border-radius: 8px;
+  padding: 0.55rem; font-family: inherit; cursor: pointer;
+}
+.button { display: inline-block; border: 1px solid #F5781E; color: #F5781E; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; }
+.button:hover { background: rgba(245,120,30,0.1); color: #F6B01A; border-color: #F6B01A; }
+.button.primary { background: #F5781E; color: #080404; font-weight: 700; width: fit-content; border-color: #F5781E; }
+.button.primary:hover { background: #F6B01A; border-color: #F6B01A; }
+.hero h1 { margin-bottom: 0.2rem; color: #F5F1EC; }
+.hero p { color: #AEA098; }
 .full { grid-column: 1 / -1; }
 .segment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
-.segment-list li { padding: 0.65rem; background: #111319; border: 1px solid #333747; border-radius: 8px; cursor: grab; }
+.segment-list li { padding: 0.65rem; background: #080404; border: 1px solid #542A12; border-radius: 8px; cursor: grab; color: #F5F1EC; }
+.segment-list li:hover { border-color: #F5781E; }
+h1, h2, h3 { color: #F5F1EC; }
+p { color: #AEA098; }

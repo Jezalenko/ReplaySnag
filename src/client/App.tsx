@@ -7,7 +7,9 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/" className="brand">ReplaySnag</Link>
+        <Link to="/">
+          <img src="/replaysnag-logo.png" alt="ReplaySnag" className="brand-logo" />
+        </Link>
         <nav>
           <Link to="/quick">Quick Replay</Link>
           <Link to="/batch">Batch Replay Packager</Link>
