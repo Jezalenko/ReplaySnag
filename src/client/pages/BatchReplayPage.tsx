@@ -2,14 +2,10 @@ import { useMemo, useState } from 'react';
 import sanitizeFilename from 'sanitize-filename';
 import { createBatchExport, getJobStatus, uploadFiles, UploadedClientFile } from '../components/api';
 import { WaveformViewer } from '../components/WaveformViewer';
+import type { SegmentTrim } from '../../shared/types';
 
 interface DragState {
   draggingId: string;
-}
-
-interface SegmentTrim {
-  inPoint: number;
-  outPoint: number;
 }
 
 const poll = async (jobId: string, onUpdate: (message: string) => void): Promise<string> => {
@@ -176,8 +172,8 @@ export function BatchReplayPage() {
                   <div onDragStart={(e) => e.stopPropagation()}>
                     <WaveformViewer
                       audioUrl={`/api/audio/${segment.id}`}
-                      inPoint={trim.inPoint}
-                      outPoint={trim.outPoint}
+                      inPoint={trim.inPoint ?? 0}
+                      outPoint={trim.outPoint ?? 0}
                       onInPointChange={(v) => setTrim(segment.id, 'inPoint', v)}
                       onOutPointChange={(v) => setTrim(segment.id, 'outPoint', v)}
                     />
