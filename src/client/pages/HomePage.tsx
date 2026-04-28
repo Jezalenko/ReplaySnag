@@ -7,7 +7,7 @@ export function HomePage() {
         <h1>ReplaySnag</h1>
         <p>Build replay ready radio segments from raw breaks in one pass.</p>
       </section>
-      <section className="grid">
+      <section className="grid two">
         <article className="panel">
           <h2>Batch Replay Packager</h2>
           <p>Package multiple segments with intro rotation, naming templates, and one-run export.</p>
