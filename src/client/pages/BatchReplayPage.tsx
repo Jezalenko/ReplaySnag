@@ -1,8 +1,14 @@
 import { useMemo, useState } from 'react';
 import { createBatchExport, getJobStatus, uploadFiles, UploadedClientFile } from '../components/api';
+import { WaveformViewer } from '../components/WaveformViewer';
 
 interface DragState {
   draggingId: string;
+}
+
+interface SegmentTrim {
+  inPoint: number;
+  outPoint: number;
 }
 
 const poll = async (jobId: string, onUpdate: (message: string) => void): Promise<string> => {
@@ -15,17 +21,34 @@ const poll = async (jobId: string, onUpdate: (message: string) => void): Promise
   }
 };
 
+function addHour(startHour: string, offset: number, segmentsPerHour: number): string {
+  const hourNum = parseInt(startHour, 10);
+  if (isNaN(hourNum)) return startHour;
+  const hourDelta = Math.floor(offset / Math.max(segmentsPerHour, 1));
+  const hour = ((hourNum + hourDelta - 1 + 24) % 24) + 1;
+  return `${hour}AM`;
+}
+
+function previewFilename(template: string, data: Record<string, string | number>): string {
+  return template
+    .replace(/\{(\w+)\}/g, (_, token: string) => String(data[token] ?? ''))
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function BatchReplayPage() {
   const [segments, setSegments] = useState<UploadedClientFile[]>([]);
   const [intros, setIntros] = useState<UploadedClientFile[]>([]);
   const [outro, setOutro] = useState<UploadedClientFile | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [segmentTrims, setSegmentTrims] = useState<Record<string, SegmentTrim>>({});
   const [sampleRate, setSampleRate] = useState(48000);
   const [trimSilence, setTrimSilence] = useState(true);
   const [normalizeLoudness, setNormalizeLoudness] = useState(true);
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
   const [template, setTemplate] = useState('{show} {hour} SEG {segment}');
-  const [show, setShow] = useState('C&T DAWN');
+  const [show, setShow] = useState('SHOW NAME');
   const [startHour, setStartHour] = useState('1');
   const [segmentsPerHour, setSegmentsPerHour] = useState(4);
   const [duplicateEnabled, setDuplicateEnabled] = useState(false);
@@ -36,6 +59,20 @@ export function BatchReplayPage() {
   const rotationHelp = useMemo(() => {
     return intros.map((intro, i) => `Slot ${i + 1}: ${intro.originalName}`).join(' • ');
   }, [intros]);
+
+  const filenamePreviews = useMemo(() => {
+    return segments.map((_, i) => {
+      const hour = addHour(startHour, i, segmentsPerHour);
+      const name = previewFilename(template, {
+        show,
+        hour,
+        segment: i + 1,
+        title: `SEG ${i + 1}`,
+        date: new Date().toISOString().slice(0, 10)
+      });
+      return `${name}.${format}`;
+    });
+  }, [segments, template, show, startHour, segmentsPerHour, format]);
 
   const uploadMany = async (files: FileList | null, setter: (value: UploadedClientFile[]) => void) => {
     if (!files?.length) return;
@@ -55,11 +92,19 @@ export function BatchReplayPage() {
     setDragState(null);
   };
 
+  const setTrim = (id: string, field: 'inPoint' | 'outPoint', value: number) => {
+    setSegmentTrims((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], [field]: value }
+    }));
+  };
+
   const exportBatch = async () => {
     if (!segments.length) return;
     setStatus('Submitting batch...');
     const jobId = await createBatchExport({
       segmentIds: segments.map((s) => s.id),
+      segmentTrims,
       introIds: intros.map((i) => i.id),
       outroId: outro?.id,
       sampleRate,
@@ -102,17 +147,46 @@ export function BatchReplayPage() {
       <section className="panel">
         <h3>Segment Order (drag to reorder)</h3>
         <ul className="segment-list">
-          {segments.map((segment) => (
-            <li
-              key={segment.id}
-              draggable
-              onDragStart={() => setDragState({ draggingId: segment.id })}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => onDrop(segment.id)}
-            >
-              {segment.originalName}
-            </li>
-          ))}
+          {segments.map((segment) => {
+            const trim = segmentTrims[segment.id] ?? { inPoint: 0, outPoint: 0 };
+            const isExpanded = expandedId === segment.id;
+            return (
+              <li
+                key={segment.id}
+                draggable
+                onDragStart={() => setDragState({ draggingId: segment.id })}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={() => onDrop(segment.id)}
+                style={{ cursor: 'grab' }}
+              >
+                <div className="segment-row">
+                  <span className="segment-drag-handle">⠿</span>
+                  <span className="segment-name">{segment.originalName}</span>
+                  <button
+                    className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExpandedId(isExpanded ? null : segment.id);
+                    }}
+                  >
+                    {isExpanded ? '▲ Close Trim' : '▼ Trim'}
+                  </button>
+                </div>
+                {isExpanded && (
+                  <div onDragStart={(e) => e.stopPropagation()}>
+                    <WaveformViewer
+                      audioUrl={`/api/audio/${segment.id}`}
+                      inPoint={trim.inPoint}
+                      outPoint={trim.outPoint}
+                      onInPointChange={(v) => setTrim(segment.id, 'inPoint', v)}
+                      onOutPointChange={(v) => setTrim(segment.id, 'outPoint', v)}
+                    />
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </section>
 
@@ -141,9 +215,19 @@ export function BatchReplayPage() {
         <label><input type="checkbox" checked={duplicateEnabled} onChange={(e) => setDuplicateEnabled(e.target.checked)} /> Duplicate outputs into another hour block</label>
         <label>Source Hour Token<input value={sourceHour} onChange={(e) => setSourceHour(e.target.value)} /></label>
         <label>Target Hour Token<input value={targetHour} onChange={(e) => setTargetHour(e.target.value)} /></label>
+        {filenamePreviews.length > 0 && (
+          <div className="full filename-preview">
+            <p className="filename-preview-label">File name preview</p>
+            <ul className="filename-preview-list">
+              {filenamePreviews.map((name, i) => (
+                <li key={i}>{name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
-      <button className="button primary" disabled={!segments.length} onClick={exportBatch}>Export Batch</button>
+      <button className="button primary" disabled={!segments.length} onClick={exportBatch}>Export Batch as ZIP</button>
       <p>{status}</p>
     </div>
   );

@@ -19,11 +19,11 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
     waveRef.current?.destroy();
     const wave = WaveSurfer.create({
       container: hostRef.current,
-      waveColor: '#f59e0b66',
-      progressColor: '#f59e0b',
-      cursorColor: '#fb923c',
+      waveColor: '#F5781E66',
+      progressColor: '#F5781E',
+      cursorColor: '#F6B01A',
       barWidth: 2,
-      height: 100,
+      height: 80,
       dragToSeek: true,
       url: audioUrl
     });
@@ -42,9 +42,8 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
   };
 
   return (
-    <section className="panel">
-      <h3>Waveform Editor</h3>
-      <div ref={hostRef} />
+    <div className="waveform-editor">
+      <div ref={hostRef} style={{ marginBottom: '0.75rem' }} />
       <div className="grid two">
         <label>
           In Point (sec)
@@ -73,6 +72,6 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
           }} />
         </label>
       </div>
-    </section>
+    </div>
   );
 }

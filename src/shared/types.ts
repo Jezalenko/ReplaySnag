@@ -39,8 +39,14 @@ export interface BatchDuplicationConfig {
   targetHour: string;
 }
 
+export interface SegmentTrim {
+  inPoint?: number;
+  outPoint?: number;
+}
+
 export interface BatchExportRequest {
   segmentIds: string[];
+  segmentTrims?: Record<string, SegmentTrim>;
   introIds: string[];
   outroId?: string;
   sampleRate: number;

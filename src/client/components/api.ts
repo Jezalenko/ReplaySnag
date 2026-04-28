@@ -14,16 +14,6 @@ export async function uploadFiles(files: FileList | File[]): Promise<UploadedCli
   return data.files;
 }
 
-export async function createQuickExport(payload: unknown): Promise<string> {
-  const res = await fetch('/api/replay/export', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  return data.jobId;
-}
-
 export async function createBatchExport(payload: unknown): Promise<string> {
   const res = await fetch('/api/replay/batch-export', {
     method: 'POST',

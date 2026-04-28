@@ -99,7 +99,8 @@ async function processSingleBatchSegment(
   sampleRate: number,
   trimSilence: boolean,
   normalizeLoudness: boolean,
-  outputPath: string
+  outputPath: string,
+  trim?: { inPoint?: number; outPoint?: number }
 ): Promise<void> {
   const segment = await getUpload(segmentId);
   if (!segment) throw new Error(`Segment ${segmentId} not found`);
@@ -111,7 +112,9 @@ async function processSingleBatchSegment(
     normalizeLoudness,
     sampleRate,
     outputFilename: outputPath,
-    format: outputPath.endsWith('.wav') ? 'wav' : 'mp3'
+    format: outputPath.endsWith('.wav') ? 'wav' : 'mp3',
+    inPoint: trim?.inPoint,
+    outPoint: trim?.outPoint
   };
   const args = await buildQuickCommand(quick, outputPath);
   await runFfmpeg(args);
@@ -138,6 +141,7 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
       const nameBase = buildBatchFilename(config.naming, i, `SEG ${i + 1}`) || `segment-${i + 1}`;
       const fileName = `${nameBase}.${config.format}`;
       const outPath = path.join(runDir, fileName);
+      const trim = config.segmentTrims?.[config.segmentIds[i]];
       await processSingleBatchSegment(
         config.segmentIds[i],
         introId,
@@ -145,7 +149,8 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
         config.sampleRate,
         config.trimSilence,
         config.normalizeLoudness,
-        outPath
+        outPath,
+        trim
       );
       produced.push(fileName);
       const progress = Math.round(((i + 1) / config.segmentIds.length) * 90);
@@ -161,7 +166,8 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
             config.sampleRate,
             config.trimSilence,
             config.normalizeLoudness,
-            path.join(runDir, duplicateName)
+            path.join(runDir, duplicateName),
+            trim
           );
           produced.push(duplicateName);
         }
