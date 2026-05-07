@@ -223,7 +223,7 @@ export function BatchReplayPage() {
               return (
                 <li
                   key={segment.id}
-                  draggable
+                  draggable={!isExpanded}
                   onDragStart={() => setDragState({ draggingId: segment.id })}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onDrop(segment.id)}

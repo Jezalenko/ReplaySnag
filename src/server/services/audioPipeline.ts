@@ -96,8 +96,7 @@ async function buildQuickCommand(config: QuickExportRequest, outputPath: string)
   }
 
   if (needsPostFilter) {
-    const src = useCrossfade && !outro ? '[a_cf]' : '[a_pre_final]';
-    chains.push(`${src}${postFilters.join(',')}[a_final]`);
+    chains.push(`[a_pre_final]${postFilters.join(',')}[a_final]`);
   }
 
   const codecArgs = config.format === 'wav' ? ['-c:a', 'pcm_s16le'] : ['-codec:a', 'libmp3lame', '-q:a', '2'];
