@@ -1,21 +1,15 @@
-import { Link, Route, Routes } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { BatchReplayPage } from './pages/BatchReplayPage';
 
 export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <Link to="/">
-          <img src="/replaysnag-logo.png" alt="ReplaySnag" className="brand-logo" />
-        </Link>
-        <nav>
-          <Link to="/batch">Batch Replay Packager</Link>
-        </nav>
+        <img src="/replaysnag-logo.png" alt="ReplaySnag" className="brand-logo" />
       </header>
       <main className="content">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<Navigate to="/batch" replace />} />
           <Route path="/batch" element={<BatchReplayPage />} />
         </Routes>
       </main>
