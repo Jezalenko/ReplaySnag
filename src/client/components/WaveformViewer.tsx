@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import WaveSurfer from 'wavesurfer.js';
 
 interface Props {
@@ -121,7 +121,7 @@ export function WaveformViewer({
                 onChange={(e) => handleCfSlider(Number(e.target.value))}
               />
               <span className="crossfade-value">
-                {cfDurSec <= 0.01 ? 'Off' : `${Math.round(cfDurSec * 1000)} ms`}
+                {cfDurSec <= 0.01 ? 'Off' : `${cfDurSec.toFixed(1)} s`}
               </span>
             </div>
             <small>Drag left to set where this breaker crossfades into the segment.</small>
