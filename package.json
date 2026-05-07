@@ -26,6 +26,11 @@
     "wavesurfer.js": "^7.8.4"
   },
   "devDependencies": {
+    "@types/archiver": "^7.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.6.0",
     "concurrently": "^9.0.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
