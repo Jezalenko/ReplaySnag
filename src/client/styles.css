@@ -1,6 +1,8 @@
+@keyframes spin { to { transform: rotate(360deg); } }
+
 :root {
   color-scheme: dark;
-  font-family: 'Poppins', 'Montserrat', Aptos, system-ui, sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #080404;
   color: #F5F1EC;
 }
@@ -34,17 +36,24 @@ button {
 .button:hover { background: rgba(245,120,30,0.1); color: #F6B01A; border-color: #F6B01A; }
 .button.primary { background: #F5781E; color: #080404; font-weight: 700; width: fit-content; border-color: #F5781E; }
 .button.primary:hover { background: #F6B01A; border-color: #F6B01A; }
+.button.primary:disabled { background: #542A12; border-color: #542A12; color: #AEA098; cursor: not-allowed; }
 .hero h1 { margin-bottom: 0.2rem; color: #F5F1EC; }
 .hero p { color: #AEA098; }
 .full { grid-column: 1 / -1; }
+.upload-indicator { font-size: 0.85rem; color: #F6B01A; display: flex; align-items: center; gap: 0.4rem; }
+.upload-indicator::before { content: ''; display: inline-block; width: 12px; height: 12px; border: 2px solid #542A12; border-top-color: #F6B01A; border-radius: 50%; animation: spin 0.8s linear infinite; }
 .segment-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .segment-list li { padding: 0.65rem; background: #080404; border: 1px solid #542A12; border-radius: 8px; color: #F5F1EC; }
 .segment-list li:hover { border-color: #F5781E; }
 .segment-row { display: flex; align-items: center; gap: 0.6rem; }
 .segment-drag-handle { color: #AEA098; font-size: 1.1rem; cursor: grab; flex-shrink: 0; }
 .segment-name { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg-status-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #542A12; border-top-color: #F5781E; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+.seg-status-done { color: #4CAF50; font-size: 0.9rem; flex-shrink: 0; font-weight: 700; }
+.seg-status-error { color: #F44336; font-size: 0.9rem; flex-shrink: 0; font-weight: 700; }
 .segment-trim-toggle { background: transparent; border: 1px solid #542A12; color: #AEA098; font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-family: inherit; }
 .segment-trim-toggle:hover, .segment-trim-toggle.active { border-color: #F5781E; color: #F5781E; }
+.segment-trim-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
 .waveform-editor { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #542A12; }
 .filename-preview { margin-top: 0.5rem; }
 .filename-preview-label { color: #AEA098; font-size: 0.85rem; margin: 0 0 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }

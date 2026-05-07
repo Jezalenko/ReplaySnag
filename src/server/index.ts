@@ -8,7 +8,7 @@ import type { BatchExportRequest, ExportJobStatus, QuickExportRequest, UploadedA
 import { cleanDanglingManifestEntries, getUpload, saveUpload } from './utils/storage.js';
 import { exportsDir, uploadsDir } from './utils/paths.js';
 import { createJob, getJob, updateJob } from './services/jobStore.js';
-import { exportBatch, exportQuick } from './services/audioPipeline.js';
+import { exportBatch, exportQuick, preprocessSegment } from './services/audioPipeline.js';
 
 const app = express();
 app.use(cors());
@@ -51,6 +51,15 @@ app.get('/api/audio/:id', async (req, res) => {
   const file = await getUpload(req.params.id);
   if (!file) return res.status(404).json({ error: 'Audio not found' });
   return res.sendFile(path.join(uploadsDir, file.storedName));
+});
+
+app.post('/api/audio/preprocess/:id', async (req, res) => {
+  try {
+    const processedId = await preprocessSegment(req.params.id);
+    res.json({ processedId });
+  } catch (error) {
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Preprocessing failed' });
+  }
 });
 
 app.post('/api/replay/export', async (req, res) => {

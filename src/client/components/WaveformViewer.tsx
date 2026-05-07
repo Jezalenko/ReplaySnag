@@ -29,7 +29,7 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
       cursorColor: '#F6B01A',
       barWidth: 2,
       height: 80,
-      dragToSeek: true,
+      dragToSeek: false,
       url: audioUrl
     });
     wave.on('ready', () => {

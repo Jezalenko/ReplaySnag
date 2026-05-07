@@ -5,9 +5,9 @@ import { spawn } from 'node:child_process';
 import archiver from 'archiver';
 import sanitizeFilename from 'sanitize-filename';
 import { nanoid } from 'nanoid';
-import type { BatchExportRequest, QuickExportRequest } from '../../shared/types.js';
+import type { BatchExportRequest, QuickExportRequest, UploadedAudio } from '../../shared/types.js';
 import { exportsDir, uploadsDir, workDir } from '../utils/paths.js';
-import { getUpload } from '../utils/storage.js';
+import { getUpload, saveUpload } from '../utils/storage.js';
 import { buildBatchFilename, remapHour } from './naming.js';
 
 function runFfmpeg(args: string[], onProgress?: (line: string) => void): Promise<void> {
@@ -118,6 +118,38 @@ async function processSingleBatchSegment(
   };
   const args = await buildQuickCommand(quick, outputPath);
   await runFfmpeg(args);
+}
+
+export async function preprocessSegment(sourceId: string): Promise<string> {
+  const source = await getUpload(sourceId);
+  if (!source) throw new Error(`Upload ${sourceId} not found`);
+  const ext = path.extname(source.storedName) || '.mp3';
+  const newId = nanoid();
+  const newStoredName = `${newId}-pre${ext}`;
+  const outputPath = path.join(uploadsDir, newStoredName);
+  const args = [
+    '-i', path.join(uploadsDir, source.storedName),
+    '-af', [
+      'silenceremove=start_periods=1:start_silence=0.1:start_threshold=-45dB',
+      'areverse',
+      'silenceremove=start_periods=1:start_silence=0.1:start_threshold=-45dB',
+      'areverse',
+      'loudnorm=I=-16:LRA=7:TP=-1.5'
+    ].join(','),
+    '-codec:a', 'libmp3lame', '-q:a', '2',
+    outputPath
+  ];
+  await runFfmpeg(args);
+  const record: UploadedAudio = {
+    id: newId,
+    originalName: source.originalName,
+    storedName: newStoredName,
+    mimeType: 'audio/mpeg',
+    size: 0,
+    createdAt: new Date().toISOString()
+  };
+  await saveUpload(record);
+  return newId;
 }
 
 export async function exportQuick(config: QuickExportRequest, onProgress?: (pct: number, message: string) => void): Promise<string> {

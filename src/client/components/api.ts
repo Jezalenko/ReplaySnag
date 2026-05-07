@@ -14,6 +14,13 @@ export async function uploadFiles(files: FileList | File[]): Promise<UploadedCli
   return data.files;
 }
 
+export async function preprocessAudio(id: string): Promise<string> {
+  const res = await fetch(`/api/audio/preprocess/${id}`, { method: 'POST' });
+  if (!res.ok) throw new Error('Preprocessing failed');
+  const data = await res.json();
+  return data.processedId as string;
+}
+
 export async function createBatchExport(payload: unknown): Promise<string> {
   const res = await fetch('/api/replay/batch-export', {
     method: 'POST',
