@@ -123,9 +123,8 @@ async function processSingleBatchSegment(
 export async function preprocessSegment(sourceId: string): Promise<string> {
   const source = await getUpload(sourceId);
   if (!source) throw new Error(`Upload ${sourceId} not found`);
-  const ext = path.extname(source.storedName) || '.mp3';
   const newId = nanoid();
-  const newStoredName = `${newId}-pre${ext}`;
+  const newStoredName = `${newId}-pre.mp3`;
   const outputPath = path.join(uploadsDir, newStoredName);
   const args = [
     '-i', path.join(uploadsDir, source.storedName),

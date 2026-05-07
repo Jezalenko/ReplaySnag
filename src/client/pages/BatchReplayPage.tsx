@@ -80,8 +80,16 @@ export function BatchReplayPage() {
     setProcessedIdMap({});
     setSegmentTrims({});
     setExpandedId(null);
+    setStatus('');
 
-    const uploaded = await uploadFiles(files);
+    let uploaded: UploadedClientFile[];
+    try {
+      uploaded = await uploadFiles(files);
+    } catch (err) {
+      setUploadPhase('idle');
+      setStatus(`Upload failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      return;
+    }
     const sorted = uploaded.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, { numeric: true }));
     setSegments(sorted);
     setUploadPhase('done');
@@ -132,9 +140,16 @@ export function BatchReplayPage() {
     if (!allReady) return;
     setStatus('Submitting batch…');
     try {
+      const remappedTrims: Record<string, SegmentTrim> = {};
+      for (const seg of segments) {
+        const pid = processedIdMap[seg.id];
+        if (pid && segmentTrims[seg.id]) {
+          remappedTrims[pid] = segmentTrims[seg.id];
+        }
+      }
       const jobId = await createBatchExport({
         segmentIds: segments.map((s) => processedIdMap[s.id] || s.id),
-        segmentTrims,
+        segmentTrims: remappedTrims,
         introIds: intros.map((i) => i.id),
         outroId: outro?.id,
         sampleRate,
