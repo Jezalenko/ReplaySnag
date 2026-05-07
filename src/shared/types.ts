@@ -23,6 +23,7 @@ export interface QuickExportRequest {
   outputFilename: string;
   format: ExportFormat;
   crossfadeDuration?: number;
+  outroCrossfadeDuration?: number;
 }
 
 export interface BatchNamingConfig {
