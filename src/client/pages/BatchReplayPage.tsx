@@ -312,7 +312,7 @@ export function BatchReplayPage() {
                   setExpandedId={setExpandedIntroId}
                   crossfadeMap={introCrossfades}
                   setCrossfadeMap={setIntroCrossfades}
-                  slotLabel="Intro"
+                  slotLabel="Slot"
                 />
               )}
             </>
@@ -343,7 +343,7 @@ export function BatchReplayPage() {
                   setExpandedId={setExpandedOutroId}
                   crossfadeMap={outroCrossfades}
                   setCrossfadeMap={setOutroCrossfades}
-                  slotLabel="Outro"
+                  slotLabel="Slot"
                 />
               )}
             </>
