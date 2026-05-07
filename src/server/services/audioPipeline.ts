@@ -84,21 +84,21 @@ async function buildQuickCommand(config: QuickExportRequest, outputPath: string)
   const assemblyOut = needsPostFilter ? '[a_pre_final]' : '[a_final]';
 
   if (useIntroCf && useOutroCf) {
-    chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=tri[a_cf_intro]`);
-    chains.push(`[a_cf_intro][a_outro]acrossfade=d=${outroCfSec}:c1=tri:c2=tri${assemblyOut}`);
+    chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=nofade[a_cf_intro]`);
+    chains.push(`[a_cf_intro][a_outro]acrossfade=d=${outroCfSec}:c1=nofade:c2=tri${assemblyOut}`);
   } else if (useIntroCf) {
     if (outro) {
-      chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=tri[a_cf_intro]`);
+      chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=nofade[a_cf_intro]`);
       chains.push(`[a_cf_intro][a_outro]concat=n=2:v=0:a=1${assemblyOut}`);
     } else {
-      chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=tri${assemblyOut}`);
+      chains.push(`[a_intro][a_segment]acrossfade=d=${introCfSec}:c1=tri:c2=nofade${assemblyOut}`);
     }
   } else if (useOutroCf) {
     if (intro) {
       chains.push(`[a_intro][a_segment]concat=n=2:v=0:a=1[a_is]`);
-      chains.push(`[a_is][a_outro]acrossfade=d=${outroCfSec}:c1=tri:c2=tri${assemblyOut}`);
+      chains.push(`[a_is][a_outro]acrossfade=d=${outroCfSec}:c1=nofade:c2=tri${assemblyOut}`);
     } else {
-      chains.push(`[a_segment][a_outro]acrossfade=d=${outroCfSec}:c1=tri:c2=tri${assemblyOut}`);
+      chains.push(`[a_segment][a_outro]acrossfade=d=${outroCfSec}:c1=nofade:c2=tri${assemblyOut}`);
     }
   } else {
     const concatPieces: string[] = [];
