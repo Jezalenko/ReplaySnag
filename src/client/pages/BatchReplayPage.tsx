@@ -10,10 +10,13 @@ interface DragState {
   draggingId: string;
 }
 
-const poll = async (jobId: string, onUpdate: (message: string) => void): Promise<string> => {
+const poll = async (
+  jobId: string,
+  onUpdate: (message: string, pct: number) => void
+): Promise<string> => {
   while (true) {
     const status = await getJobStatus(jobId);
-    onUpdate(`${status.message} (${status.progress}%)`);
+    onUpdate(status.message, status.progress);
     if (status.status === 'completed' && status.downloadId) return status.downloadId;
     if (status.status === 'failed') throw new Error(status.error || 'Failed');
     await new Promise((r) => setTimeout(r, 1500));
@@ -46,6 +49,7 @@ export function BatchReplayPage() {
   const [uploadCount, setUploadCount] = useState(0);
   const [sampleRate, setSampleRate] = useState(48000);
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
+  const [crossfadeDuration, setCrossfadeDuration] = useState(0);
   const [template, setTemplate] = useState('{show} {hour} SEG {segment}');
   const [show, setShow] = useState('SHOW NAME');
   const [startHour, setStartHour] = useState('1');
@@ -54,6 +58,7 @@ export function BatchReplayPage() {
   const [sourceHour, setSourceHour] = useState('1AM');
   const [targetHour, setTargetHour] = useState('3AM');
   const [status, setStatus] = useState('');
+  const [exportProgress, setExportProgress] = useState<number | null>(null);
 
   const rotationHelp = useMemo(() => {
     return intros.map((intro, i) => `Slot ${i + 1}: ${intro.originalName}`).join(' • ');
@@ -83,6 +88,7 @@ export function BatchReplayPage() {
     setSegmentTrims({});
     setExpandedId(null);
     setStatus('');
+    setExportProgress(null);
 
     let uploaded: UploadedClientFile[];
     try {
@@ -141,6 +147,7 @@ export function BatchReplayPage() {
   const exportBatch = async () => {
     if (!allReady) return;
     setStatus('Submitting batch…');
+    setExportProgress(0);
     try {
       const remappedTrims: Record<string, SegmentTrim> = {};
       for (const seg of segments) {
@@ -157,6 +164,7 @@ export function BatchReplayPage() {
         sampleRate,
         trimSilence: false,
         normalizeLoudness: false,
+        crossfadeDuration,
         format,
         naming: {
           template,
@@ -171,10 +179,15 @@ export function BatchReplayPage() {
           targetHour
         }
       });
-      const downloadId = await poll(jobId, setStatus);
+      const downloadId = await poll(jobId, (msg, pct) => {
+        setStatus(msg);
+        setExportProgress(pct);
+      });
+      setExportProgress(100);
       window.location.href = `/api/replay/download/${downloadId}`;
       setStatus('Done');
     } catch (err) {
+      setExportProgress(null);
       setStatus(`Error: ${err instanceof Error ? err.message : 'Export failed'}`);
     }
   };
@@ -235,15 +248,13 @@ export function BatchReplayPage() {
                     </button>
                   </div>
                   {isExpanded && procId && (
-                    <div onDragStart={(e) => e.stopPropagation()}>
-                      <WaveformViewer
-                        audioUrl={`/api/audio/${procId}`}
-                        inPoint={trim.inPoint ?? 0}
-                        outPoint={trim.outPoint ?? 0}
-                        onInPointChange={(v) => setTrim(segment.id, 'inPoint', v)}
-                        onOutPointChange={(v) => setTrim(segment.id, 'outPoint', v)}
-                      />
-                    </div>
+                    <WaveformViewer
+                      audioUrl={`/api/audio/${procId}`}
+                      inPoint={trim.inPoint ?? 0}
+                      outPoint={trim.outPoint ?? 0}
+                      onInPointChange={(v) => setTrim(segment.id, 'inPoint', v)}
+                      onOutPointChange={(v) => setTrim(segment.id, 'outPoint', v)}
+                    />
                   )}
                 </li>
               );
@@ -264,6 +275,21 @@ export function BatchReplayPage() {
             <option value="mp3">MP3</option>
             <option value="wav">WAV</option>
           </select>
+        </label>
+        <label>
+          Intro Crossfade
+          <div className="crossfade-row">
+            <input
+              type="range"
+              min={0}
+              max={3000}
+              step={100}
+              value={crossfadeDuration}
+              onChange={(e) => setCrossfadeDuration(Number(e.target.value))}
+            />
+            <span className="crossfade-value">{crossfadeDuration === 0 ? 'Off' : `${crossfadeDuration} ms`}</span>
+          </div>
+          <small>Blends intro tail into segment start. 0 = hard cut.</small>
         </label>
       </section>
 
@@ -287,8 +313,19 @@ export function BatchReplayPage() {
         )}
       </section>
 
-      <button className="button primary" disabled={!allReady} onClick={exportBatch}>Export Batch as ZIP</button>
-      {status && <p>{status}</p>}
+      <button className="button primary" disabled={!allReady || exportProgress !== null} onClick={exportBatch}>
+        Export Batch as ZIP
+      </button>
+
+      {exportProgress !== null && (
+        <div className="export-progress-wrap">
+          <div className="export-progress-bar">
+            <div className="export-progress-fill" style={{ width: `${exportProgress}%` }} />
+          </div>
+          <span className="export-progress-label">{status || 'Processing…'} ({exportProgress}%)</span>
+        </div>
+      )}
+      {exportProgress === null && status && <p className="export-status-msg">{status}</p>}
     </div>
   );
 }

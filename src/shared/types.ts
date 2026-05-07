@@ -22,6 +22,7 @@ export interface QuickExportRequest {
   sampleRate: number;
   outputFilename: string;
   format: ExportFormat;
+  crossfadeDuration?: number;
 }
 
 export interface BatchNamingConfig {
@@ -52,6 +53,7 @@ export interface BatchExportRequest {
   sampleRate: number;
   trimSilence: boolean;
   normalizeLoudness: boolean;
+  crossfadeDuration?: number;
   naming: BatchNamingConfig;
   duplication: BatchDuplicationConfig;
   format: ExportFormat;

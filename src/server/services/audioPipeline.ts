@@ -80,11 +80,24 @@ async function buildQuickCommand(config: QuickExportRequest, outputPath: string)
   if (config.fadeOutSeconds && config.fadeOutSeconds > 0) postFilters.push('areverse', `afade=t=in:st=0:d=${config.fadeOutSeconds}`, 'areverse');
   if (config.normalizeLoudness) postFilters.push('loudnorm=I=-16:LRA=7:TP=-1.5');
 
-  if (postFilters.length) {
-    chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1[a_joined]`);
-    chains.push(`[a_joined]${postFilters.join(',')}[a_final]`);
+  const crossfadeSec = (config.crossfadeDuration ?? 0) / 1000;
+  const useCrossfade = crossfadeSec > 0 && !!intro;
+  const needsPostFilter = postFilters.length > 0;
+  const concatOut = needsPostFilter ? '[a_pre_final]' : '[a_final]';
+
+  if (useCrossfade) {
+    const cfOut = outro ? '[a_cf]' : concatOut;
+    chains.push(`[a_intro][a_segment]acrossfade=d=${crossfadeSec}:c1=tri:c2=tri${cfOut}`);
+    if (outro) {
+      chains.push(`[a_cf][a_outro]concat=n=2:v=0:a=1${concatOut}`);
+    }
   } else {
-    chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1[a_final]`);
+    chains.push(`${pieces.join('')}concat=n=${pieces.length}:v=0:a=1${concatOut}`);
+  }
+
+  if (needsPostFilter) {
+    const src = useCrossfade && !outro ? '[a_cf]' : '[a_pre_final]';
+    chains.push(`${src}${postFilters.join(',')}[a_final]`);
   }
 
   const codecArgs = config.format === 'wav' ? ['-c:a', 'pcm_s16le'] : ['-codec:a', 'libmp3lame', '-q:a', '2'];
@@ -100,7 +113,8 @@ async function processSingleBatchSegment(
   trimSilence: boolean,
   normalizeLoudness: boolean,
   outputPath: string,
-  trim?: { inPoint?: number; outPoint?: number }
+  trim?: { inPoint?: number; outPoint?: number },
+  crossfadeDuration?: number
 ): Promise<void> {
   const segment = await getUpload(segmentId);
   if (!segment) throw new Error(`Segment ${segmentId} not found`);
@@ -114,7 +128,8 @@ async function processSingleBatchSegment(
     outputFilename: outputPath,
     format: outputPath.endsWith('.wav') ? 'wav' : 'mp3',
     inPoint: trim?.inPoint,
-    outPoint: trim?.outPoint
+    outPoint: trim?.outPoint,
+    crossfadeDuration
   };
   const args = await buildQuickCommand(quick, outputPath);
   await runFfmpeg(args);
@@ -181,7 +196,8 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
         config.trimSilence,
         config.normalizeLoudness,
         outPath,
-        trim
+        trim,
+        config.crossfadeDuration
       );
       produced.push(fileName);
       const progress = Math.round(((i + 1) / config.segmentIds.length) * 90);
@@ -198,7 +214,8 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
             config.trimSilence,
             config.normalizeLoudness,
             path.join(runDir, duplicateName),
-            trim
+            trim,
+            config.crossfadeDuration
           );
           produced.push(duplicateName);
         }
