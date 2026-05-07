@@ -43,6 +43,7 @@ export function BatchReplayPage() {
   const [segmentStatus, setSegmentStatus] = useState<Record<string, SegmentProcStatus>>({});
   const [processedIdMap, setProcessedIdMap] = useState<Record<string, string>>({});
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done'>('idle');
+  const [uploadCount, setUploadCount] = useState(0);
   const [sampleRate, setSampleRate] = useState(48000);
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
   const [template, setTemplate] = useState('{show} {hour} SEG {segment}');
@@ -75,6 +76,7 @@ export function BatchReplayPage() {
   const handleSegmentFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setUploadPhase('uploading');
+    setUploadCount(files.length);
     setSegments([]);
     setSegmentStatus({});
     setProcessedIdMap({});
@@ -98,7 +100,7 @@ export function BatchReplayPage() {
     sorted.forEach((s) => { initialStatus[s.id] = 'processing'; });
     setSegmentStatus(initialStatus);
 
-    await Promise.all(sorted.map(async (seg) => {
+    for (const seg of sorted) {
       try {
         const processedId = await preprocessAudio(seg.id);
         setProcessedIdMap((prev) => ({ ...prev, [seg.id]: processedId }));
@@ -106,7 +108,7 @@ export function BatchReplayPage() {
       } catch {
         setSegmentStatus((prev) => ({ ...prev, [seg.id]: 'error' }));
       }
-    }));
+    }
   };
 
   const uploadMany = async (files: FileList | null, setter: (value: UploadedClientFile[]) => void) => {
@@ -184,7 +186,7 @@ export function BatchReplayPage() {
         <label>
           Raw Segment Files
           <input type="file" accept="audio/*" multiple onChange={(e) => handleSegmentFiles(e.target.files)} />
-          {uploadPhase === 'uploading' && <span className="upload-indicator">Uploading files…</span>}
+          {uploadPhase === 'uploading' && <span className="upload-indicator">Uploading {uploadCount} file{uploadCount !== 1 ? 's' : ''}…</span>}
         </label>
         <label>Intro Rotation Assets (upload 3 for legacy slot 1/2/3 cycle)<input type="file" accept="audio/*" multiple onChange={(e) => uploadMany(e.target.files, setIntros)} /></label>
         <label>Shared Outro<input type="file" accept="audio/*" onChange={async (e) => {
