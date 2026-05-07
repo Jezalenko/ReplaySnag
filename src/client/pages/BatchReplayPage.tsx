@@ -36,6 +36,56 @@ function previewFilename(template: string, data: Record<string, string | number>
   return sanitizeFilename(rendered).replace(/\s+/g, ' ').trim();
 }
 
+interface RotationListProps {
+  items: UploadedClientFile[];
+  expandedId: string | null;
+  setExpandedId: (id: string | null) => void;
+  crossfadeMap: Record<string, number>;
+  setCrossfadeMap: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+  slotLabel: string;
+}
+
+function RotationList({ items, expandedId: expId, setExpandedId: setExpId, crossfadeMap, setCrossfadeMap, slotLabel }: RotationListProps) {
+  return (
+    <ul className="intro-list">
+      {items.map((item, i) => {
+        const isExpanded = expId === item.id;
+        return (
+          <li key={item.id}>
+            <div className="intro-row">
+              <span className="intro-slot">{slotLabel} {i + 1}</span>
+              <span className="intro-name">{item.originalName}</span>
+              {(crossfadeMap[item.id] ?? 0) > 0 && (
+                <span className="cf-badge">{((crossfadeMap[item.id]) / 1000).toFixed(1)} s</span>
+              )}
+              <button
+                className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
+                onClick={() => setExpId(isExpanded ? null : item.id)}
+              >
+                {isExpanded ? '▲ Close' : '▼ Preview'}
+              </button>
+            </div>
+            {isExpanded && (
+              <WaveformViewer
+                audioUrl={`/api/audio/${item.id}`}
+                previewOnly
+                inPoint={0}
+                outPoint={0}
+                onInPointChange={() => {}}
+                onOutPointChange={() => {}}
+                crossfadeDuration={crossfadeMap[item.id] ?? 0}
+                onCrossfadeDurationChange={(ms) =>
+                  setCrossfadeMap((prev) => ({ ...prev, [item.id]: ms }))
+                }
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function BatchReplayPage() {
   const [segments, setSegments] = useState<UploadedClientFile[]>([]);
   const [intros, setIntros] = useState<UploadedClientFile[]>([]);
@@ -220,59 +270,6 @@ export function BatchReplayPage() {
       setStatus(`Error: ${err instanceof Error ? err.message : 'Export failed'}`);
     }
   };
-
-  const RotationList = ({
-    items,
-    expandedId: expId,
-    setExpandedId: setExpId,
-    crossfadeMap,
-    setCrossfadeMap,
-    slotLabel
-  }: {
-    items: UploadedClientFile[];
-    expandedId: string | null;
-    setExpandedId: (id: string | null) => void;
-    crossfadeMap: Record<string, number>;
-    setCrossfadeMap: React.Dispatch<React.SetStateAction<Record<string, number>>>;
-    slotLabel: string;
-  }) => (
-    <ul className="intro-list">
-      {items.map((item, i) => {
-        const isExpanded = expId === item.id;
-        return (
-          <li key={item.id}>
-            <div className="intro-row">
-              <span className="intro-slot">{slotLabel} {i + 1}</span>
-              <span className="intro-name">{item.originalName}</span>
-              {crossfadeMap[item.id] > 0 && (
-                <span className="cf-badge">{crossfadeMap[item.id]} ms</span>
-              )}
-              <button
-                className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
-                onClick={() => setExpId(isExpanded ? null : item.id)}
-              >
-                {isExpanded ? '▲ Close' : '▼ Preview'}
-              </button>
-            </div>
-            {isExpanded && (
-              <WaveformViewer
-                audioUrl={`/api/audio/${item.id}`}
-                previewOnly
-                inPoint={0}
-                outPoint={0}
-                onInPointChange={() => {}}
-                onOutPointChange={() => {}}
-                crossfadeDuration={crossfadeMap[item.id] ?? 0}
-                onCrossfadeDurationChange={(ms) =>
-                  setCrossfadeMap((prev) => ({ ...prev, [item.id]: ms }))
-                }
-              />
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
 
   return (
     <div className="stack">

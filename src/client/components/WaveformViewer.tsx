@@ -88,6 +88,16 @@ export function WaveformViewer({
     seek(newPoint);
   };
 
+  const handleWaveformClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!previewOnly || !onCrossfadeDurationChange || duration <= 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const clickedPos = Math.max(0, Math.min(duration, (x / rect.width) * duration));
+    const cfMs = Math.max(0, Math.round((duration - clickedPos) * 1000));
+    onCrossfadeDurationChange(cfMs);
+    seek(clickedPos);
+  };
+
   return (
     <div
       className="waveform-editor"
@@ -95,7 +105,14 @@ export function WaveformViewer({
       onPointerDown={stopBubble}
       onDragStart={stopBubble}
     >
-      <div style={{ position: 'relative', marginBottom: '0.75rem' }}>
+      <div
+        style={{
+          position: 'relative',
+          marginBottom: '0.75rem',
+          cursor: previewOnly && onCrossfadeDurationChange ? 'crosshair' : undefined
+        }}
+        onClick={handleWaveformClick}
+      >
         <div ref={hostRef} />
         {cfMarkerPct !== null && (
           <div className="cf-marker" style={{ left: `${cfMarkerPct}%` }} />
@@ -124,7 +141,7 @@ export function WaveformViewer({
                 {cfDurSec <= 0.01 ? 'Off' : `${cfDurSec.toFixed(1)} s`}
               </span>
             </div>
-            <small>Drag left to set where this breaker crossfades into the segment.</small>
+            <small>Click the waveform or drag the handle to set where crossfade begins.</small>
           </label>
         </div>
       )}
