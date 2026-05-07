@@ -49,11 +49,12 @@ export interface BatchExportRequest {
   segmentIds: string[];
   segmentTrims?: Record<string, SegmentTrim>;
   introIds: string[];
-  outroId?: string;
+  outroIds?: string[];
   sampleRate: number;
   trimSilence: boolean;
   normalizeLoudness: boolean;
-  crossfadeDuration?: number;
+  introCrossfades?: number[];
+  outroCrossfades?: number[];
   naming: BatchNamingConfig;
   duplication: BatchDuplicationConfig;
   format: ExportFormat;

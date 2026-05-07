@@ -54,9 +54,15 @@ button {
 .segment-trim-toggle { background: transparent; border: 1px solid #542A12; color: #AEA098; font-size: 0.78rem; padding: 0.2rem 0.55rem; border-radius: 6px; cursor: pointer; flex-shrink: 0; font-family: inherit; }
 .segment-trim-toggle:hover, .segment-trim-toggle.active { border-color: #F5781E; color: #F5781E; }
 .segment-trim-toggle:disabled { opacity: 0.4; cursor: not-allowed; }
+.segment-assignment { display: flex; gap: 0.4rem; margin-top: 0.35rem; padding-left: 1.6rem; flex-wrap: wrap; }
+.assign-badge { font-size: 0.72rem; font-family: monospace; padding: 0.1rem 0.45rem; border-radius: 4px; border: 1px solid; }
+.assign-badge.intro-badge { color: #F5781E; border-color: rgba(245,120,30,0.35); background: rgba(245,120,30,0.08); }
+.assign-badge.outro-badge { color: #AEA098; border-color: rgba(174,160,152,0.3); background: rgba(174,160,152,0.07); }
 .waveform-editor { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #542A12; }
 .play-pause-btn { background: transparent; border: 1px solid #F5781E; color: #F5781E; border-radius: 6px; padding: 0.3rem 0.9rem; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: background 0.15s, color 0.15s; }
 .play-pause-btn:hover { background: rgba(245,120,30,0.15); color: #F6B01A; border-color: #F6B01A; }
+.cf-marker { position: absolute; top: 0; bottom: 0; width: 2px; background: #F6B01A; border-radius: 1px; pointer-events: none; box-shadow: 0 0 6px rgba(246,176,26,0.6); }
+.cf-badge { font-size: 0.72rem; font-family: monospace; color: #F6B01A; border: 1px solid rgba(246,176,26,0.35); background: rgba(246,176,26,0.08); border-radius: 4px; padding: 0.1rem 0.4rem; flex-shrink: 0; }
 .crossfade-row { display: flex; align-items: center; gap: 0.75rem; }
 .crossfade-row input[type=range] { flex: 1; }
 .crossfade-value { color: #F6B01A; font-size: 0.85rem; min-width: 4rem; text-align: right; font-family: monospace; }
@@ -78,4 +84,8 @@ p { color: #AEA098; }
 .intro-row { display: flex; align-items: center; gap: 0.6rem; }
 .intro-slot { font-size: 0.78rem; color: #F6B01A; font-weight: 700; font-family: monospace; flex-shrink: 0; background: rgba(246,176,26,0.12); border: 1px solid rgba(246,176,26,0.3); border-radius: 4px; padding: 0.1rem 0.4rem; }
 .intro-name { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #F5F1EC; }
-.outro-ready { color: #4CAF50; }
+.rotation-header { display: flex; align-items: center; gap: 0.6rem; }
+.rotation-label { font-size: 0.95rem; font-weight: 600; color: #F5F1EC; }
+.rotation-toggle { font-size: 0.75rem; padding: 0.15rem 0.6rem; border-radius: 20px; border: 1px solid #542A12; color: #AEA098; font-family: inherit; cursor: pointer; flex-shrink: 0; transition: border-color 0.15s, color 0.15s; }
+.rotation-toggle.active { border-color: #F5781E; color: #F5781E; }
+.rotation-toggle:hover { border-color: #F5781E; color: #F5781E; }

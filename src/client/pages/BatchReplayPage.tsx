@@ -39,10 +39,11 @@ function previewFilename(template: string, data: Record<string, string | number>
 export function BatchReplayPage() {
   const [segments, setSegments] = useState<UploadedClientFile[]>([]);
   const [intros, setIntros] = useState<UploadedClientFile[]>([]);
-  const [outro, setOutro] = useState<UploadedClientFile | null>(null);
+  const [outros, setOutros] = useState<UploadedClientFile[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [expandedIntroId, setExpandedIntroId] = useState<string | null>(null);
+  const [expandedOutroId, setExpandedOutroId] = useState<string | null>(null);
   const [segmentTrims, setSegmentTrims] = useState<Record<string, SegmentTrim>>({});
   const [segmentStatus, setSegmentStatus] = useState<Record<string, SegmentProcStatus>>({});
   const [processedIdMap, setProcessedIdMap] = useState<Record<string, string>>({});
@@ -51,9 +52,13 @@ export function BatchReplayPage() {
   const [introUploadPhase, setIntroUploadPhase] = useState<'idle' | 'uploading'>('idle');
   const [introUploadCount, setIntroUploadCount] = useState(0);
   const [outroUploadPhase, setOutroUploadPhase] = useState<'idle' | 'uploading'>('idle');
+  const [outroUploadCount, setOutroUploadCount] = useState(0);
+  const [introCrossfades, setIntroCrossfades] = useState<Record<string, number>>({});
+  const [outroCrossfades, setOutroCrossfades] = useState<Record<string, number>>({});
+  const [useIntros, setUseIntros] = useState(true);
+  const [useOutros, setUseOutros] = useState(true);
   const [sampleRate, setSampleRate] = useState(48000);
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
-  const [crossfadeDuration, setCrossfadeDuration] = useState(0);
   const [template, setTemplate] = useState('{show} {hour} SEG {segment}');
   const [show, setShow] = useState('SHOW NAME');
   const [startHour, setStartHour] = useState('1');
@@ -63,6 +68,9 @@ export function BatchReplayPage() {
   const [targetHour, setTargetHour] = useState('3AM');
   const [status, setStatus] = useState('');
   const [exportProgress, setExportProgress] = useState<number | null>(null);
+
+  const activeIntros = useIntros ? intros : [];
+  const activeOutros = useOutros ? outros : [];
 
   const filenamePreviews = useMemo(() => {
     return segments.map((_, i) => {
@@ -130,12 +138,14 @@ export function BatchReplayPage() {
     }
   };
 
-  const handleOutroFile = async (files: FileList | null) => {
+  const handleOutroFiles = async (files: FileList | null) => {
     if (!files?.length) return;
     setOutroUploadPhase('uploading');
+    setOutroUploadCount(files.length);
+    setExpandedOutroId(null);
     try {
-      const [file] = await uploadFiles(files);
-      setOutro(file);
+      const uploaded = await uploadFiles(files);
+      setOutros(uploaded.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, { numeric: true })));
     } finally {
       setOutroUploadPhase('idle');
     }
@@ -162,7 +172,7 @@ export function BatchReplayPage() {
 
   const allReady = segments.length > 0 && segments.every((s) => segmentStatus[s.id] === 'done');
 
-  const exportBatch = async () => {
+  const runExport = async () => {
     if (!allReady) return;
     setStatus('Submitting batch…');
     setExportProgress(0);
@@ -177,12 +187,13 @@ export function BatchReplayPage() {
       const jobId = await createBatchExport({
         segmentIds: segments.map((s) => processedIdMap[s.id] || s.id),
         segmentTrims: remappedTrims,
-        introIds: intros.map((i) => i.id),
-        outroId: outro?.id,
+        introIds: activeIntros.map((i) => i.id),
+        outroIds: activeOutros.map((o) => o.id),
+        introCrossfades: activeIntros.map((i) => introCrossfades[i.id] ?? 0),
+        outroCrossfades: activeOutros.map((o) => outroCrossfades[o.id] ?? 0),
         sampleRate,
         trimSilence: false,
         normalizeLoudness: false,
-        crossfadeDuration,
         format,
         naming: {
           template,
@@ -210,6 +221,59 @@ export function BatchReplayPage() {
     }
   };
 
+  const RotationList = ({
+    items,
+    expandedId: expId,
+    setExpandedId: setExpId,
+    crossfadeMap,
+    setCrossfadeMap,
+    slotLabel
+  }: {
+    items: UploadedClientFile[];
+    expandedId: string | null;
+    setExpandedId: (id: string | null) => void;
+    crossfadeMap: Record<string, number>;
+    setCrossfadeMap: React.Dispatch<React.SetStateAction<Record<string, number>>>;
+    slotLabel: string;
+  }) => (
+    <ul className="intro-list">
+      {items.map((item, i) => {
+        const isExpanded = expId === item.id;
+        return (
+          <li key={item.id}>
+            <div className="intro-row">
+              <span className="intro-slot">{slotLabel} {i + 1}</span>
+              <span className="intro-name">{item.originalName}</span>
+              {crossfadeMap[item.id] > 0 && (
+                <span className="cf-badge">{crossfadeMap[item.id]} ms</span>
+              )}
+              <button
+                className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
+                onClick={() => setExpId(isExpanded ? null : item.id)}
+              >
+                {isExpanded ? '▲ Close' : '▼ Preview'}
+              </button>
+            </div>
+            {isExpanded && (
+              <WaveformViewer
+                audioUrl={`/api/audio/${item.id}`}
+                previewOnly
+                inPoint={0}
+                outPoint={0}
+                onInPointChange={() => {}}
+                onOutPointChange={() => {}}
+                crossfadeDuration={crossfadeMap[item.id] ?? 0}
+                onCrossfadeDurationChange={(ms) =>
+                  setCrossfadeMap((prev) => ({ ...prev, [item.id]: ms }))
+                }
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
     <div className="stack">
       <div>
@@ -225,62 +289,79 @@ export function BatchReplayPage() {
         </label>
 
         <div className="stack" style={{ gap: '0.5rem' }}>
-          <label>
-            Intro Rotation Assets
-            <small style={{ fontWeight: 'normal', color: '#AEA098' }}>Upload up to 3 for a legacy slot 1/2/3 cycle</small>
-            <input type="file" accept="audio/*" multiple onChange={(e) => handleIntroFiles(e.target.files)} />
-            {introUploadPhase === 'uploading' && <span className="upload-indicator">Uploading {introUploadCount} file{introUploadCount !== 1 ? 's' : ''}…</span>}
-          </label>
-          {intros.length > 0 && (
-            <ul className="intro-list">
-              {intros.map((intro, i) => {
-                const isExpanded = expandedIntroId === intro.id;
-                return (
-                  <li key={intro.id}>
-                    <div className="intro-row">
-                      <span className="intro-slot">Slot {i + 1}</span>
-                      <span className="intro-name">{intro.originalName}</span>
-                      <button
-                        className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
-                        onClick={() => setExpandedIntroId(isExpanded ? null : intro.id)}
-                      >
-                        {isExpanded ? '▲ Close' : '▼ Preview'}
-                      </button>
-                    </div>
-                    {isExpanded && (
-                      <WaveformViewer
-                        audioUrl={`/api/audio/${intro.id}`}
-                        previewOnly
-                        inPoint={0}
-                        outPoint={0}
-                        onInPointChange={() => {}}
-                        onOutPointChange={() => {}}
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+          <div className="rotation-header">
+            <span className="rotation-label">Intro Rotation</span>
+            <small style={{ color: '#AEA098' }}>Upload up to 3 for a slot 1/2/3 cycle</small>
+            <button
+              className={`rotation-toggle${useIntros ? ' active' : ''}`}
+              onClick={() => setUseIntros((v) => !v)}
+            >
+              {useIntros ? 'On' : 'Off'}
+            </button>
+          </div>
+          {useIntros && (
+            <>
+              <label style={{ marginTop: 0 }}>
+                <input type="file" accept="audio/*" multiple onChange={(e) => handleIntroFiles(e.target.files)} />
+                {introUploadPhase === 'uploading' && <span className="upload-indicator">Uploading {introUploadCount} file{introUploadCount !== 1 ? 's' : ''}…</span>}
+              </label>
+              {intros.length > 0 && (
+                <RotationList
+                  items={intros}
+                  expandedId={expandedIntroId}
+                  setExpandedId={setExpandedIntroId}
+                  crossfadeMap={introCrossfades}
+                  setCrossfadeMap={setIntroCrossfades}
+                  slotLabel="Intro"
+                />
+              )}
+            </>
           )}
         </div>
 
-        <label>
-          Shared Outro
-          <input type="file" accept="audio/*" onChange={(e) => handleOutroFile(e.target.files)} />
-          {outroUploadPhase === 'uploading' && <span className="upload-indicator">Uploading…</span>}
-          {outro && outroUploadPhase === 'idle' && <small className="outro-ready">✓ {outro.originalName}</small>}
-        </label>
+        <div className="stack" style={{ gap: '0.5rem' }}>
+          <div className="rotation-header">
+            <span className="rotation-label">Outro Rotation</span>
+            <small style={{ color: '#AEA098' }}>Upload multiple for a cycling rotation</small>
+            <button
+              className={`rotation-toggle${useOutros ? ' active' : ''}`}
+              onClick={() => setUseOutros((v) => !v)}
+            >
+              {useOutros ? 'On' : 'Off'}
+            </button>
+          </div>
+          {useOutros && (
+            <>
+              <label style={{ marginTop: 0 }}>
+                <input type="file" accept="audio/*" multiple onChange={(e) => handleOutroFiles(e.target.files)} />
+                {outroUploadPhase === 'uploading' && <span className="upload-indicator">Uploading {outroUploadCount} file{outroUploadCount !== 1 ? 's' : ''}…</span>}
+              </label>
+              {outros.length > 0 && (
+                <RotationList
+                  items={outros}
+                  expandedId={expandedOutroId}
+                  setExpandedId={setExpandedOutroId}
+                  crossfadeMap={outroCrossfades}
+                  setCrossfadeMap={setOutroCrossfades}
+                  slotLabel="Outro"
+                />
+              )}
+            </>
+          )}
+        </div>
       </section>
 
       {segments.length > 0 && (
         <section className="panel">
           <h3>Segment Order (drag to reorder)</h3>
           <ul className="segment-list">
-            {segments.map((segment) => {
+            {segments.map((segment, i) => {
               const st = segmentStatus[segment.id];
               const procId = processedIdMap[segment.id];
               const trim = segmentTrims[segment.id] ?? { inPoint: 0, outPoint: 0 };
               const isExpanded = expandedId === segment.id;
+              const introSlot = activeIntros.length > 0 ? (i % activeIntros.length) + 1 : null;
+              const outroSlot = activeOutros.length > 0 ? (i % activeOutros.length) + 1 : null;
               return (
                 <li
                   key={segment.id}
@@ -308,6 +389,12 @@ export function BatchReplayPage() {
                       {isExpanded ? '▲ Close Trim' : '▼ Trim'}
                     </button>
                   </div>
+                  {(introSlot !== null || outroSlot !== null) && (
+                    <div className="segment-assignment">
+                      {introSlot !== null && <span className="assign-badge intro-badge">Intro {introSlot}</span>}
+                      {outroSlot !== null && <span className="assign-badge outro-badge">Outro {outroSlot}</span>}
+                    </div>
+                  )}
                   {isExpanded && procId && (
                     <WaveformViewer
                       audioUrl={`/api/audio/${procId}`}
@@ -337,21 +424,6 @@ export function BatchReplayPage() {
             <option value="wav">WAV</option>
           </select>
         </label>
-        <label>
-          Intro Crossfade
-          <div className="crossfade-row">
-            <input
-              type="range"
-              min={0}
-              max={3000}
-              step={100}
-              value={crossfadeDuration}
-              onChange={(e) => setCrossfadeDuration(Number(e.target.value))}
-            />
-            <span className="crossfade-value">{crossfadeDuration === 0 ? 'Off' : `${crossfadeDuration} ms`}</span>
-          </div>
-          <small>Blends intro tail into segment start. 0 = hard cut.</small>
-        </label>
       </section>
 
       <section className="panel grid two">
@@ -374,7 +446,7 @@ export function BatchReplayPage() {
         )}
       </section>
 
-      <button className="button primary" disabled={!allReady || exportProgress !== null} onClick={exportBatch}>
+      <button className="button primary" disabled={!allReady || exportProgress !== null} onClick={runExport}>
         Export Batch as ZIP
       </button>
 

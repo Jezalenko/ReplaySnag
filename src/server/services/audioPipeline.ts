@@ -182,7 +182,15 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
   try {
     const produced: string[] = [];
     for (let i = 0; i < config.segmentIds.length; i += 1) {
-      const introId = config.introIds.length ? config.introIds[i % config.introIds.length] : undefined;
+      const introIdx = config.introIds.length ? i % config.introIds.length : -1;
+      const introId = introIdx >= 0 ? config.introIds[introIdx] : undefined;
+      const outroIds = config.outroIds ?? [];
+      const outroIdx = outroIds.length ? i % outroIds.length : -1;
+      const outroId = outroIdx >= 0 ? outroIds[outroIdx] : undefined;
+      const introCf = config.introCrossfades?.length && introIdx >= 0
+        ? config.introCrossfades[introIdx % config.introCrossfades.length]
+        : 0;
+
       const nameBase = buildBatchFilename(config.naming, i, `SEG ${i + 1}`) || `segment-${i + 1}`;
       const fileName = `${nameBase}.${config.format}`;
       const outPath = path.join(runDir, fileName);
@@ -190,13 +198,13 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
       await processSingleBatchSegment(
         config.segmentIds[i],
         introId,
-        config.outroId,
+        outroId,
         config.sampleRate,
         config.trimSilence,
         config.normalizeLoudness,
         outPath,
         trim,
-        config.crossfadeDuration
+        introCf
       );
       produced.push(fileName);
       const progress = Math.round(((i + 1) / config.segmentIds.length) * 90);
@@ -208,13 +216,13 @@ export async function exportBatch(config: BatchExportRequest, onProgress?: (pct:
           await processSingleBatchSegment(
             config.segmentIds[i],
             introId,
-            config.outroId,
+            outroId,
             config.sampleRate,
             config.trimSilence,
             config.normalizeLoudness,
             path.join(runDir, duplicateName),
             trim,
-            config.crossfadeDuration
+            introCf
           );
           produced.push(duplicateName);
         }
