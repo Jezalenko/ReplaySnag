@@ -42,11 +42,15 @@ export function BatchReplayPage() {
   const [outro, setOutro] = useState<UploadedClientFile | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIntroId, setExpandedIntroId] = useState<string | null>(null);
   const [segmentTrims, setSegmentTrims] = useState<Record<string, SegmentTrim>>({});
   const [segmentStatus, setSegmentStatus] = useState<Record<string, SegmentProcStatus>>({});
   const [processedIdMap, setProcessedIdMap] = useState<Record<string, string>>({});
   const [uploadPhase, setUploadPhase] = useState<'idle' | 'uploading' | 'done'>('idle');
   const [uploadCount, setUploadCount] = useState(0);
+  const [introUploadPhase, setIntroUploadPhase] = useState<'idle' | 'uploading'>('idle');
+  const [introUploadCount, setIntroUploadCount] = useState(0);
+  const [outroUploadPhase, setOutroUploadPhase] = useState<'idle' | 'uploading'>('idle');
   const [sampleRate, setSampleRate] = useState(48000);
   const [format, setFormat] = useState<'mp3' | 'wav'>('mp3');
   const [crossfadeDuration, setCrossfadeDuration] = useState(0);
@@ -59,10 +63,6 @@ export function BatchReplayPage() {
   const [targetHour, setTargetHour] = useState('3AM');
   const [status, setStatus] = useState('');
   const [exportProgress, setExportProgress] = useState<number | null>(null);
-
-  const rotationHelp = useMemo(() => {
-    return intros.map((intro, i) => `Slot ${i + 1}: ${intro.originalName}`).join(' • ');
-  }, [intros]);
 
   const filenamePreviews = useMemo(() => {
     return segments.map((_, i) => {
@@ -117,10 +117,28 @@ export function BatchReplayPage() {
     }
   };
 
-  const uploadMany = async (files: FileList | null, setter: (value: UploadedClientFile[]) => void) => {
+  const handleIntroFiles = async (files: FileList | null) => {
     if (!files?.length) return;
-    const uploaded = await uploadFiles(files);
-    setter(uploaded.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, { numeric: true })));
+    setIntroUploadPhase('uploading');
+    setIntroUploadCount(files.length);
+    setExpandedIntroId(null);
+    try {
+      const uploaded = await uploadFiles(files);
+      setIntros(uploaded.sort((a, b) => a.originalName.localeCompare(b.originalName, undefined, { numeric: true })));
+    } finally {
+      setIntroUploadPhase('idle');
+    }
+  };
+
+  const handleOutroFile = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setOutroUploadPhase('uploading');
+    try {
+      const [file] = await uploadFiles(files);
+      setOutro(file);
+    } finally {
+      setOutroUploadPhase('idle');
+    }
   };
 
   const onDrop = (targetId: string) => {
@@ -194,21 +212,64 @@ export function BatchReplayPage() {
 
   return (
     <div className="stack">
-      <h1>Batch Replay Packager</h1>
+      <div>
+        <h1>Batch Replay Packager</h1>
+        <p className="page-tagline">Upload your raw radio talk breaks, assign intros and outros, set crossfade timing, and export a broadcast-ready ZIP of labelled MP3 files in one click.</p>
+      </div>
+
       <section className="panel stack">
         <label>
           Raw Segment Files
           <input type="file" accept="audio/*" multiple onChange={(e) => handleSegmentFiles(e.target.files)} />
           {uploadPhase === 'uploading' && <span className="upload-indicator">Uploading {uploadCount} file{uploadCount !== 1 ? 's' : ''}…</span>}
         </label>
-        <label>Intro Rotation Assets (upload 3 for legacy slot 1/2/3 cycle)<input type="file" accept="audio/*" multiple onChange={(e) => uploadMany(e.target.files, setIntros)} /></label>
-        <label>Shared Outro<input type="file" accept="audio/*" onChange={async (e) => {
-          const files = e.target.files;
-          if (!files?.length) return;
-          const [file] = await uploadFiles(files);
-          setOutro(file);
-        }} /></label>
-        <small>{rotationHelp || 'No intro rotation assets uploaded yet.'}</small>
+
+        <div className="stack" style={{ gap: '0.5rem' }}>
+          <label>
+            Intro Rotation Assets
+            <small style={{ fontWeight: 'normal', color: '#AEA098' }}>Upload up to 3 for a legacy slot 1/2/3 cycle</small>
+            <input type="file" accept="audio/*" multiple onChange={(e) => handleIntroFiles(e.target.files)} />
+            {introUploadPhase === 'uploading' && <span className="upload-indicator">Uploading {introUploadCount} file{introUploadCount !== 1 ? 's' : ''}…</span>}
+          </label>
+          {intros.length > 0 && (
+            <ul className="intro-list">
+              {intros.map((intro, i) => {
+                const isExpanded = expandedIntroId === intro.id;
+                return (
+                  <li key={intro.id}>
+                    <div className="intro-row">
+                      <span className="intro-slot">Slot {i + 1}</span>
+                      <span className="intro-name">{intro.originalName}</span>
+                      <button
+                        className={`segment-trim-toggle${isExpanded ? ' active' : ''}`}
+                        onClick={() => setExpandedIntroId(isExpanded ? null : intro.id)}
+                      >
+                        {isExpanded ? '▲ Close' : '▼ Preview'}
+                      </button>
+                    </div>
+                    {isExpanded && (
+                      <WaveformViewer
+                        audioUrl={`/api/audio/${intro.id}`}
+                        previewOnly
+                        inPoint={0}
+                        outPoint={0}
+                        onInPointChange={() => {}}
+                        onOutPointChange={() => {}}
+                      />
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        <label>
+          Shared Outro
+          <input type="file" accept="audio/*" onChange={(e) => handleOutroFile(e.target.files)} />
+          {outroUploadPhase === 'uploading' && <span className="upload-indicator">Uploading…</span>}
+          {outro && outroUploadPhase === 'idle' && <small className="outro-ready">✓ {outro.originalName}</small>}
+        </label>
       </section>
 
       {segments.length > 0 && (

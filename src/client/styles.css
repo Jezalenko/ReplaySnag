@@ -71,3 +71,11 @@ button {
 .filename-preview-list li { font-size: 0.85rem; color: #F6B01A; font-family: monospace; padding: 0.3rem 0.5rem; background: #080404; border: 1px solid #542A12; border-radius: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 h1, h2, h3 { color: #F5F1EC; }
 p { color: #AEA098; }
+.page-tagline { color: #AEA098; font-size: 0.95rem; margin: 0.1rem 0 0; line-height: 1.5; }
+.intro-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.intro-list li { padding: 0.55rem 0.65rem; background: #080404; border: 1px solid #542A12; border-radius: 8px; }
+.intro-list li:hover { border-color: #F5781E; }
+.intro-row { display: flex; align-items: center; gap: 0.6rem; }
+.intro-slot { font-size: 0.78rem; color: #F6B01A; font-weight: 700; font-family: monospace; flex-shrink: 0; background: rgba(246,176,26,0.12); border: 1px solid rgba(246,176,26,0.3); border-radius: 4px; padding: 0.1rem 0.4rem; }
+.intro-name { flex: 1; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #F5F1EC; }
+.outro-ready { color: #4CAF50; }

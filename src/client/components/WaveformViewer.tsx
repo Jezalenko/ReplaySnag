@@ -7,9 +7,10 @@ interface Props {
   outPoint: number;
   onInPointChange: (value: number) => void;
   onOutPointChange: (value: number) => void;
+  previewOnly?: boolean;
 }
 
-export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, onOutPointChange }: Props) {
+export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, onOutPointChange, previewOnly }: Props) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const waveRef = useRef<WaveSurfer | null>(null);
   const [duration, setDuration] = useState(0);
@@ -37,7 +38,7 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
     wave.on('ready', () => {
       const d = wave.getDuration();
       setDuration(d);
-      if (outPointRef.current === 0) {
+      if (!previewOnly && outPointRef.current === 0) {
         onOutPointChangeRef.current(d);
       }
     });
@@ -75,52 +76,56 @@ export function WaveformViewer({ audioUrl, inPoint, outPoint, onInPointChange, o
       <button className="play-pause-btn" onClick={togglePlay} onMouseDown={stopBubble}>
         {playing ? '⏸ Pause' : '▶ Play'}
       </button>
-      <div className="grid two" style={{ marginTop: '0.75rem' }}>
-        <label>
-          In Point (sec)
-          <input type="number" min={0} step="0.1" value={inPoint} onChange={(e) => onInPointChange(Number(e.target.value))} onMouseDown={stopBubble} onPointerDown={stopBubble} />
-        </label>
-        <label>
-          Out Point (sec)
-          <input type="number" min={0} step="0.1" value={outPoint} onChange={(e) => onOutPointChange(Number(e.target.value))} onMouseDown={stopBubble} onPointerDown={stopBubble} />
-        </label>
-      </div>
-      <div className="grid two">
-        <label>
-          In Handle
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step="0.1"
-            value={Math.min(inPoint, duration)}
-            onMouseDown={stopBubble}
-            onPointerDown={stopBubble}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              onInPointChange(next);
-              seek(next);
-            }}
-          />
-        </label>
-        <label>
-          Out Handle
-          <input
-            type="range"
-            min={0}
-            max={duration || 0}
-            step="0.1"
-            value={Math.min(outPoint, duration)}
-            onMouseDown={stopBubble}
-            onPointerDown={stopBubble}
-            onChange={(e) => {
-              const next = Number(e.target.value);
-              onOutPointChange(next);
-              seek(next);
-            }}
-          />
-        </label>
-      </div>
+      {!previewOnly && (
+        <>
+          <div className="grid two" style={{ marginTop: '0.75rem' }}>
+            <label>
+              In Point (sec)
+              <input type="number" min={0} step="0.1" value={inPoint} onChange={(e) => onInPointChange(Number(e.target.value))} onMouseDown={stopBubble} onPointerDown={stopBubble} />
+            </label>
+            <label>
+              Out Point (sec)
+              <input type="number" min={0} step="0.1" value={outPoint} onChange={(e) => onOutPointChange(Number(e.target.value))} onMouseDown={stopBubble} onPointerDown={stopBubble} />
+            </label>
+          </div>
+          <div className="grid two">
+            <label>
+              In Handle
+              <input
+                type="range"
+                min={0}
+                max={duration || 0}
+                step="0.1"
+                value={Math.min(inPoint, duration)}
+                onMouseDown={stopBubble}
+                onPointerDown={stopBubble}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  onInPointChange(next);
+                  seek(next);
+                }}
+              />
+            </label>
+            <label>
+              Out Handle
+              <input
+                type="range"
+                min={0}
+                max={duration || 0}
+                step="0.1"
+                value={Math.min(outPoint, duration)}
+                onMouseDown={stopBubble}
+                onPointerDown={stopBubble}
+                onChange={(e) => {
+                  const next = Number(e.target.value);
+                  onOutPointChange(next);
+                  seek(next);
+                }}
+              />
+            </label>
+          </div>
+        </>
+      )}
     </div>
   );
 }
